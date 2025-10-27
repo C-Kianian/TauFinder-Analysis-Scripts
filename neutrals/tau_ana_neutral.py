@@ -207,11 +207,12 @@ for file in to_process:
     for ievt, event in enumerate(reader):
 
         # Get collections
-        reco_taus = event.getCollection('TauRec_PFO')
+        reco_taus = event.getCollection('RecoTaus')
         pfos = event.getCollection('PandoraPFOs')
         mcParticles = event.getCollection('MCParticle')
-        tauRecoLink = event.getCollection('TauRecLink_PFO')
+        tauRecoLink = event.getCollection('TauPFOLink')
         recoMCLink = event.getCollection('RecoMCTruthLink')
+
         reco_photons = [pfo for pfo in pfos if abs(pfo.getType()) == 22]
         reco_pis = [pfo for pfo in pfos if abs(pfo.getType()) == 211]
 
