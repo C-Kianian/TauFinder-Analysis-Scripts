@@ -5,10 +5,10 @@
 - ```cd TauFinder-Analysis-Scripts/bib_ana/charged_pion_scripts```
 
 ## Enter the container and bind to the shared directory: 
-- ```apptainer run \ -B /ospool/uc-shared/project/futurecolliders/:/host/futurecolliders \ /cvmfs/unpacked.cern.ch/ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v2.11-amd64```
+- ```apptainer run -B /ospool/uc-shared/project/futurecolliders/:/host/futurecolliders /cvmfs/unpacked.cern.ch/ghcr.io/muoncollidersoft/mucoll-sim-ubuntu24:v2.11-amd64```
 
 ## Run a script:
-- ```python ./pi_ana_bib.py --inputFile=/host/futurecolliders/gpenn/pions/<path to either pi+/pi-, bib/non bib samples directories> --outputFile=pi_bib_ana.root --charge=<charge of the pion samples, either plus, minus or both if the sample is mixed>```
+- ```python ./pi_ana_bib.py --inputFile=/host/futurecolliders/gpenn/v7_pions/<path to either pi+/pi-, bib/non bib samples directories> --outputFile=pi_bib_ana.root --charge=<charge of the pion samples, either plus, minus or both if the sample is mixed>```
 
 ## If you encounter a segfault/memory error running over all samples at once, there are three options:
 1. Run over less samples, ~5k
