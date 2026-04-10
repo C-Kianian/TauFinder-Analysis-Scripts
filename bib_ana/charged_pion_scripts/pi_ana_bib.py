@@ -12,9 +12,21 @@ ROOT.gStyle.SetOptStat("nemruo") #for uf/of info
 
 # Args
 parser = ArgumentParser()
+parser.add_argument('-c', '--charge', type=str, required=True,
+                    help='Charge state of the pions ("plus", "minus", or "both")') # Input plus, minus, or both for this arg
 parser.add_argument('-i', '--inputFile', type=str, default='output_reco.slcio')
 parser.add_argument('-o', '--outputFile', type=str, default='pi_bib_ana.root')
 args = parser.parse_args()
+
+# get charge pion we are interested in
+charge = str(args.charge).lower()
+allowed_pdgs = {
+    'plus': {211},
+    'minus': {-211},
+    'both': {211, -211}
+}
+if charge not in allowed_pdgs: raise ValueError("Invalid charge state. Must be 'plus', 'minus', or 'both'.")
+selected_pdgs = allowed_pdgs[charge]
 
 # Hist setup
 PT_MIN, PT_MAX, PT_BINS = 0.0, 1000.0, 20
@@ -170,9 +182,7 @@ for file in to_process:
         best_mc_pt = -1.0
 
         for mc in mcs:
-            #if abs(mc.getPDG()) != 211:
-            if mc.getPDG() != 211:
-                continue
+            if mc.getPDG() not in selected_pdgs: continue
 
             mcMom = mc.getMomentum()
             mcPt = math.hypot(mcMom[0], mcMom[1])
@@ -185,6 +195,7 @@ for file in to_process:
             continue
 
         # MC kinematics
+        mcPDG = best_mc.getPDG()
         mcMom = best_mc.getMomentum()
         mcPt = best_mc_pt
         mcTheta = math.acos(mcMom[2] / math.sqrt(mcPt**2 + mcMom[2]**2))
@@ -210,9 +221,7 @@ for file in to_process:
         best_reco_pi_pt = -1.0
 
         for pfo in pfos:
-            #if abs(pfo.getType()) != 211:
-            if pfo.getType() != 211:
-                continue
+            if pfo.getType() != mcPDG: continue
 
             # Pion kinematics
             recoPiMom = pfo.getMomentum()
