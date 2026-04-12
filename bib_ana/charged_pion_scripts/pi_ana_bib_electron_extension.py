@@ -221,7 +221,7 @@ for file in to_process:
         best_reco_pt = -1
 
         for pfo in pfos:
-            pfo_pdg = pfo.getPDG()
+            pfo_pdg = pfo.getType()
             if pfo_pdg != mcPDG or (abs(pfo_pdg) == 11 and pfo_pdg * mcPDG > 0): continue # Ensures reco e or pi is the same sign as the MC
 
             mom = pfo.getMomentum()
