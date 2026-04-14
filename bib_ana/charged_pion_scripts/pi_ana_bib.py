@@ -89,35 +89,40 @@ fMatchedEStrict = book(TH1F('mc_matched_e_strict', '(Strict) Matched Best Reco C
 
 # Residuals
 fResidualPt = book(TH1F('residual_pt', 'Residual Transverse Momentum;True - Reco p_{T} [GeV/c];Entries', 400, -100, 100))
-fResidualPt.SetMaximum(1000)
+fResidualPt.SetMaximum(2000)
 
 fResidualE = book(TH1F('residual_e', 'Residual Energy;True - Reco E [GeV];Entries', 400, -100, 100))
-fResidualE.SetMaximum(1000)
+fResidualE.SetMaximum(2000)
 
 # Strict residuals
 fResidualEStrict = book(TH1F('residual_e_strict', '(Strict) Residual Energy;True - Reco E [GeV];Entries', 400, -100, 100))
-fResidualEStrict.SetMaximum(1000)
+fResidualEStrict.SetMaximum(2000)
 
 fResidualPtStrict = book(TH1F('residual_pt_strict', '(Strict) Residual Transverse Momentum;True - Reco p_{T} [GeV/c];Entries', 400, -100, 100))
-fResidualPtStrict.SetMaximum(1000)
+fResidualPtStrict.SetMaximum(2000)
 
 # Resolution
 fResPt = TH1F('resolution_pt', 'p_{T} Resolution;(True - Reco p_{T})/(True p_{T});Entries', 100, -0.1, 0.1)
-fResPt.SetMaximum(1000)
+fResPt.SetMaximum(2000)
 
 fResE = TH1F('resolution_e', 'E Resolution;(True - Reco E)/(True E);Entries', 100, -0.1, 0.1)
-fResE.SetMaximum(1000)
+fResE.SetMaximum(2000)
 
 # Strict resolution
 fResEStrict = TH1F('resolution_e_strict', '(Strict) E Resolution;(True - Reco E)/(True E);Entries', 100, -0.1, 0.1)
-fResEStrict.SetMaximum(1000)
+fResEStrict.SetMaximum(2000)
 
 fResPtStrict = TH1F('resolution_pt_strict', '(Strict) p_{T} Resolution;(True - Reco p_{T})/(True p_{T});Entries', 100, -0.1, 0.1)
-fResPtStrict.SetMaximum(1000)
+fResPtStrict.SetMaximum(2000)
 
 # Regional pT histograms
 regions = ['barrel', 'centbarrel', 'transition', 'endcap']
-regional_max = [800, 600, 400, 200]
+regional_maxs = {
+    'plus': [800, 600, 400, 200],
+    'minus': [800, 600, 400, 200],
+    'both': [1600, 1200, 800, 400],
+}
+regional_max = regional_maxs[charge]
 fAllPtReg = {}
 fMatchedPtReg = {}
 fMatchedPtRegStrict = {}
