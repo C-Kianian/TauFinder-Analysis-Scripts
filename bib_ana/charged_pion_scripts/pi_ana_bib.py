@@ -6,9 +6,16 @@ from ROOT import TH1F, TFile, TCanvas, gPad
 import math
 from argparse import ArgumentParser
 import os
+from array import array
 
 ROOT.gStyle.SetOptFit(111)
 ROOT.gStyle.SetOptStat("nemruo") #for uf/of info
+
+##################
+# CHANGE BINS HERE
+rebins = list(range(0, 1001, 50))
+n_rebins = len(rebins) - 1
+##################
 
 # Args
 parser = ArgumentParser()
@@ -25,11 +32,16 @@ allowed_pdgs = {
     'minus': {-211},
     'both': {211, -211}
 }
+latex = {
+    'plus': "Simulated #pi^{+} Gun",
+    'minus': "Simulated #pi^{-} Gun",
+    'both': "Simulated #pi^{+} and #pi^{-} Guns"
+}
 if charge not in allowed_pdgs: raise ValueError("Invalid charge state. Must be 'plus', 'minus', or 'both'.")
 selected_pdgs = allowed_pdgs[charge]
 
 # Hist setup
-PT_MIN, PT_MAX, PT_BINS = 0.0, 1000.0, 20
+PT_MIN, PT_MAX, PT_BINS = 0.0, 1000.0, 160
 
 ETA_MIN, ETA_MAX, ETA_BINS = 0.0, 2.5, 20
 
@@ -116,7 +128,7 @@ fResERegStrict = {}
 
 for r in regions:
     # Matched info
-    fAllPtReg[r] = book(TH1F(f'mc_all_pt_{r}', f'MC Charged Pion p_{{T}} ({r})', PT_BINS, PT_MIN, PT_MAX))
+    fAllPtReg[r] = book(TH1F(f'mc_pion_pt_{r}', f'MC Charged Pion p_{{T}} ({r})', PT_BINS, PT_MIN, PT_MAX))
     fMatchedPtReg[r] = book(TH1F(f'mc_matched_pt_{r}',f'Matched MC Charged Pion p_{{T}} ({r})',PT_BINS, PT_MIN, PT_MAX))
     fMatchedPtRegStrict[r] = book(TH1F(f'mc_matched_pt_{r}_strict',f'(Strict) Matched MC Charged Pion p_{{T}} ({r})',PT_BINS, PT_MIN, PT_MAX))
 
@@ -133,6 +145,12 @@ for r in regions:
 
 # Get theta regions and eta
 def eta(theta):
+    # Added to prevent 0 crashes
+    if theta < 1e-10:
+        theta = 1e-10
+    elif (math.pi - theta) < 1e-10:
+        theta = math.pi - 1e-10
+
     return -math.log(math.tan(theta / 2.0))
 
 def theta_region(theta):
@@ -294,9 +312,20 @@ for file in to_process:
     reader.close()
 
 # Eff plots
-def make_eff(num, den, name, title, xtitle):
-    eff = num.Clone(name)
-    eff.Divide(num, den, 1, 1, 'B')
+def make_eff(num, den, name, title, xtitle, rebin=False):
+    if rebin:
+        rebin_arr = array('d', rebins) # make rebin array into cpp array
+
+        num_rebin = num.Rebin(n_rebins, num.GetName()+"_rebin", rebin_arr)
+        den_rebin = den.Rebin(n_rebins, den.GetName()+"_rebin", rebin_arr)
+
+        eff = num_rebin.Clone(name)
+        eff.Divide(num_rebin, den_rebin, 1, 1, 'B')
+    else:
+        eff = num.Clone(name)
+        eff.Divide(num, den, 1, 1, 'B')
+
+
     eff.SetLineWidth(2)
     eff.SetTitle(title)
     eff.GetXaxis().SetTitle(xtitle)
@@ -311,14 +340,14 @@ def fit_gauss(hist):
     book(hist)
 
 # Eff plots
-make_eff(fMatchedPt, fMCPt, 'pt_eff', 'Charged Pion Efficiency vs p_{T}', 'True p_{T} [GeV/c]')
+make_eff(fMatchedPt, fMCPt, 'pt_eff', 'Charged Pion Efficiency vs p_{T}', 'True p_{T} [GeV/c]', rebin=True)
 make_eff(fMatchedEta, fMCEta, 'eta_eff', 'Charged Pion Efficiency vs |#eta|', 'True |#eta|')
 make_eff(fMatchedTheta, fMCTheta, 'theta_eff', 'Charged Pion Efficiency vs #theta', 'True #theta')
 make_eff(fMatchedPhi, fMCPhi, 'phi_eff', 'Charged Pion Efficiency vs #phi', 'True #phi')
 make_eff(fMatchedE, fMCE, 'e_eff', 'Charged Pion Efficiency vs E', 'True E [GeV]')
 
 # Strict eff plots
-make_eff(fMatchedPtStrict, fMCPt, 'pt_eff_strict', '(Strict) Charged Pion Efficiency vs p_{T}', 'True p_{T} [GeV/c]')
+make_eff(fMatchedPtStrict, fMCPt, 'pt_eff_strict', '(Strict) Charged Pion Efficiency vs p_{T}', 'True p_{T} [GeV/c]', rebin=True)
 make_eff(fMatchedEtaStrict, fMCEta, 'eta_eff_strict', '(Strict) Charged Pion Efficiency vs |#eta|', 'True |#eta|')
 make_eff(fMatchedThetaStrict, fMCTheta, 'theta_eff_strict', '(Strict) Charged Pion Efficiency vs #theta', 'True #theta')
 make_eff(fMatchedPhiStrict, fMCPhi, 'phi_eff_strict', '(Strict) Charged Pion Efficiency vs #phi', 'True #phi')
@@ -333,8 +362,8 @@ fit_gauss(fResEStrict)
 # Regional hists
 for r in regions:
     # Regional eff
-    make_eff(fMatchedPtReg[r], fAllPtReg[r],f'pt_{r}_eff',f'Charged Pion Efficiency vs p_{{T}} ({r})','True p_{T} [GeV/c]')
-    make_eff(fMatchedPtRegStrict[r],fAllPtReg[r],f'pt_{r}_eff_strict',f'(Strict) Charged Pion Efficiency vs p_{{T}} ({r})','True p_{T} [GeV/c]')
+    make_eff(fMatchedPtReg[r], fAllPtReg[r],f'pt_{r}_eff',f'Charged Pion Efficiency vs p_{{T}} ({r})','True p_{T} [GeV/c]', rebin=True)
+    make_eff(fMatchedPtRegStrict[r],fAllPtReg[r],f'pt_{r}_eff_strict',f'(Strict) Charged Pion Efficiency vs p_{{T}} ({r})','True p_{T} [GeV/c]', rebin=True)
 
     # Regional resoltuions
     fit_gauss(fResEReg[r])
@@ -349,20 +378,22 @@ for h in hists:
 output.Close()
 
 # png plots
+c = TCanvas() # Canvas
+
+text = ROOT.TLatex() # Text settings
+text.SetNDC()
+text.SetTextFont(42)
+text.SetTextSize(0.04)
+text.SetTextAlign(13)
+
 for h in hists:
-    c = TCanvas()
+    c.Clear() # Clear canvas
     h.Draw()
     gPad.Update()
 
-    text = ROOT.TLatex()
-    text.SetNDC()
-    text.SetTextFont(42)
-    text.SetTextSize(0.04)
-    text.SetTextAlign(13)
     text.DrawLatex(0.12, 0.93, "#bf{#it{MAIA Detector Concept}}")
-    text.DrawLatex(0.12, 0.88, "Simulated #pi^{+} Gun")
+    text.DrawLatex(0.12, 0.88, latex[charge])
     c.Update()
 
     c.SaveAs(h.GetName() + '.png')
-    del c
 
