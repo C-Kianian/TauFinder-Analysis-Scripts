@@ -89,32 +89,39 @@ fMatchedPhiStrict = book(TH1F('mc_matched_phi_piEle_strict', '(Strict) Matched M
 fMatchedEStrict = book(TH1F('mc_matched_e_piEle_strict', '(Strict) Matched MC Pion to Reco #pi or e E;E_true [GeV];Entries', PT_BINS, PT_MIN, PT_MAX))
 
 # Residual
+residual_maxs = {
+    'plus': 1000,
+    'minus': 1000,
+    'both': 2000,
+}
+residual_max = residual_maxs[charge]
+
 fResidualPt = book(TH1F('residual_pt_piEle', 'Residual p_{T};True - Reco p_{T} [GeV/c];Entries', 400, -100, 100))
-fResidualPt.SetMaximum(2000)
+fResidualPt.SetMaximum(residual_max)
 
 fResidualE = book(TH1F('residual_e_piEle', 'Residual E;True - Reco E [GeV];Entries', 400, -100, 100))
-fResidualE.SetMaximum(2000)
+fResidualE.SetMaximum(residual_max)
 
 # Strict residual
 fResidualPtStrict = book(TH1F('residual_pt_piEle_strict', 'Residual p_{T};True - Reco p_{T} [GeV/c];Entries', 400, -100, 100))
-fResidualPtStrict.SetMaximum(2000)
+fResidualPtStrict.SetMaximum(residual_max)
 
 fResidualEStrict = book(TH1F('residual_e_piEle_strict', 'Residual E;True - Reco E [GeV];Entries', 400, -100, 100))
-fResidualEStrict.SetMaximum(2000)
+fResidualEStrict.SetMaximum(residual_max)
 
 # Resolution
 fResPt = TH1F('resolution_pt_piEle', 'p_{T} Resolution;(True - Reco p_{T})/(True p_{T});Entries', 100, -0.1, 0.1)
-fResPt.SetMaximum(2000)
+fResPt.SetMaximum(residual_max)
 
 fResE = TH1F('resolution_e_piEle', 'Energy Resolution;(True - Reco E)/(True E);Entries', 100, -0.1, 0.1)
-fResE.SetMaximum(2000)
+fResE.SetMaximum(residual_max)
 
 # Strict resolution
 fResPtStrict = TH1F('resolution_pt_piEle_strict', 'p_{T} Resolution;(True - Reco p_{T})/(True p_{T});Entries', 100, -0.1, 0.1)
-fResPtStrict.SetMaximum(2000)
+fResPtStrict.SetMaximum(residual_max)
 
 fResEStrict = TH1F('resolution_e_piEle_strict', 'Energy Resolution;(True - Reco E)/(True E);Entries', 100, -0.1, 0.1)
-fResEStrict.SetMaximum(2000)
+fResEStrict.SetMaximum(residual_max)
 
 # Truth E vs residual
 #fEvsResidual = book(TH1F('e_vs_residual_piEle', 'E vs Residual;True E;True - Reco E', 100, 0, 100))
@@ -164,15 +171,16 @@ def eta(theta):
 
 def theta_region(theta):
     regs = []
-    if 0.70 < theta < 2.45:
+    if 0.70 < theta < 2.44:
         regs.append('barrel')
-    if 1.0 < theta < 2.0:
+    if 0.99 < theta < 2.15:
         regs.append('centbarrel')
-    if (0.577 < theta < 1.0) or (2.0 < theta < 2.56):
+    if (0.7 < theta < 0.99) or (2.15 < theta < 2.44):
         regs.append('transition')
-    if theta < 0.577 or theta > 2.56:
+    if (0.175 < theta < 0.7) or (2.44 < theta < 2.96):
         regs.append('endcap')
-    return regs if regs else None
+    if len(regs) > 0: return regs
+    return None
 
 def delta_phi(phi1, phi2):
     dphi = phi1 - phi2

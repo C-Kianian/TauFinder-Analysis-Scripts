@@ -88,32 +88,40 @@ fMatchedPhiStrict = book(TH1F('mc_matched_phi_strict', '(Strict) Matched Best Re
 fMatchedEStrict = book(TH1F('mc_matched_e_strict', '(Strict) Matched Best Reco Charged Pion MC E;E_true [GeV];Entries', PT_BINS, PT_MIN, PT_MAX))
 
 # Residuals
+residual_maxs = {
+    'plus': 1000,
+    'minus': 1000,
+    'both': 2000,
+}
+residual_max = residual_maxs[charge]
+
+
 fResidualPt = book(TH1F('residual_pt', 'Residual Transverse Momentum;True - Reco p_{T} [GeV/c];Entries', 400, -100, 100))
-fResidualPt.SetMaximum(2000)
+fResidualPt.SetMaximum(residual_max)
 
 fResidualE = book(TH1F('residual_e', 'Residual Energy;True - Reco E [GeV];Entries', 400, -100, 100))
-fResidualE.SetMaximum(2000)
+fResidualE.SetMaximum(residual_max)
 
 # Strict residuals
 fResidualEStrict = book(TH1F('residual_e_strict', '(Strict) Residual Energy;True - Reco E [GeV];Entries', 400, -100, 100))
-fResidualEStrict.SetMaximum(2000)
+fResidualEStrict.SetMaximum(residual_max)
 
 fResidualPtStrict = book(TH1F('residual_pt_strict', '(Strict) Residual Transverse Momentum;True - Reco p_{T} [GeV/c];Entries', 400, -100, 100))
-fResidualPtStrict.SetMaximum(2000)
+fResidualPtStrict.SetMaximum(residual_max)
 
 # Resolution
 fResPt = TH1F('resolution_pt', 'p_{T} Resolution;(True - Reco p_{T})/(True p_{T});Entries', 100, -0.1, 0.1)
-fResPt.SetMaximum(2000)
+fResPt.SetMaximum(residual_max)
 
 fResE = TH1F('resolution_e', 'E Resolution;(True - Reco E)/(True E);Entries', 100, -0.1, 0.1)
-fResE.SetMaximum(2000)
+fResE.SetMaximum(residual_max)
 
 # Strict resolution
 fResEStrict = TH1F('resolution_e_strict', '(Strict) E Resolution;(True - Reco E)/(True E);Entries', 100, -0.1, 0.1)
-fResEStrict.SetMaximum(2000)
+fResEStrict.SetMaximum(residual_max)
 
 fResPtStrict = TH1F('resolution_pt_strict', '(Strict) p_{T} Resolution;(True - Reco p_{T})/(True p_{T});Entries', 100, -0.1, 0.1)
-fResPtStrict.SetMaximum(2000)
+fResPtStrict.SetMaximum(residual_max)
 
 # Regional pT histograms
 regions = ['barrel', 'centbarrel', 'transition', 'endcap']
@@ -160,13 +168,13 @@ def eta(theta):
 
 def theta_region(theta):
     regs = []
-    if 0.70 < theta < 2.45:
+    if 0.70 < theta < 2.44:
         regs.append('barrel')
-    if 1.0 < theta < 2.0:
+    if 0.99 < theta < 2.15:
         regs.append('centbarrel')
-    if (0.577 < theta < 1.0) or (2.0 < theta < 2.56):
+    if (0.7 < theta < 0.99) or (2.15 < theta < 2.44):
         regs.append('transition')
-    if theta < 0.577 or theta > 2.56:
+    if (0.175 < theta < 0.7) or (2.44 < theta < 2.96):
         regs.append('endcap')
     if len(regs) > 0: return regs
     return None
