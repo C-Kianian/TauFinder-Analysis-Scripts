@@ -20,7 +20,7 @@ n_rebins = len(rebins) - 1
 # Args
 parser = ArgumentParser()
 parser.add_argument('-c', '--charge', type=str, required=True,
-                    help='Charge state of the pions ("plus", "minus", or "both")') # Input plus, minus, or both for this arg
+                    help='Charge matching pions ("plus", "minus", "both", or "none" for no charge matching)') # Input plus, minus, both, or none for this arg
 parser.add_argument('-i', '--inputFile', type=str, default='output_reco.slcio')
 parser.add_argument('-o', '--outputFile', type=str, default='pi_bib_ana.root')
 args = parser.parse_args()
@@ -30,15 +30,18 @@ charge = str(args.charge).lower()
 allowed_pdgs = {
     'plus': {211},
     'minus': {-211},
-    'both': {211, -211}
+    'both': {211, -211},
+    'none': {211, -211}
 }
 latex = {
     'plus': "Simulated #pi^{+} Gun",
     'minus': "Simulated #pi^{-} Gun",
-    'both': "Simulated #pi^{+} and #pi^{-} Guns"
+    'both': "Simulated #pi^{+} and #pi^{-} Guns",
+    'none': "Simulated Charged #pi Gun (no charge matching)"
 }
-if charge not in allowed_pdgs: raise ValueError("Invalid charge state. Must be 'plus', 'minus', or 'both'.")
+if charge not in allowed_pdgs: raise ValueError("Invalid charge state. Must be 'plus', 'minus', 'both', or 'none'.")
 selected_pdgs = allowed_pdgs[charge]
+ignore_charge = (charge == 'none') # If no charge matching, ignore charge
 
 # Hist setup
 PT_MIN, PT_MAX, PT_BINS = 0.0, 1000.0, 160
@@ -252,7 +255,8 @@ for file in to_process:
         best_reco_pi_pt = -1.0
 
         for pfo in pfos:
-            if pfo.getType() != mcPDG: continue
+            if ignore_charge and abs(pfo.getType()) != abs(mcPDG): continue # no charge matching case
+            elif pfo.getType() != mcPDG: continue
 
             # Pion kinematics
             recoPiMom = pfo.getMomentum()

@@ -21,9 +21,9 @@ n_rebins = len(rebins) - 1
 # Args
 parser = ArgumentParser()
 parser.add_argument('-c', '--charge', type=str, required=True,
-                    help='Charge state of the pions (plus, minus, or both)') # Input plus, minus, or both for this arg
+                    help='Charge matching pions ("plus", "minus", "both", or "none" for no charge matching)') # Input plus, minus, both, or none for this arg
 parser.add_argument('-i', '--inputFile', type=str, default='output_reco.slcio')
-parser.add_argument('-o', '--outputFile', type=str, default='piEle_bib_ana.root')
+parser.add_argument('-o', '--outputFile', type=str, default='pi_bib_ana.root')
 args = parser.parse_args()
 
 # get charge pion we are interested in
@@ -31,15 +31,18 @@ charge = str(args.charge).lower()
 allowed_pdgs = {
     'plus': {211},
     'minus': {-211},
-    'both': {211, -211}
+    'both': {211, -211},
+    'none': {211, -211}
 }
 latex = {
     'plus': "Simulated #pi^{+} Gun",
     'minus': "Simulated #pi^{-} Gun",
-    'both': "Simulated #pi^{+} and #pi^{-} Guns"
+    'both': "Simulated #pi^{+} and #pi^{-} Guns",
+    'none': "Simulated Charged #pi Gun (no charge matching)"
 }
-if charge not in allowed_pdgs: raise ValueError("Invalid charge state. Must be 'plus', 'minus', or 'both'.")
+if charge not in allowed_pdgs: raise ValueError("Invalid charge state. Must be 'plus', 'minus', 'both', or 'none'.")
 selected_pdgs = allowed_pdgs[charge]
+ignore_charge = charge == 'none'
 
 # Hist setup
 PT_MIN, PT_MAX, PT_BINS = 0.0, 1000.0, 160
@@ -250,10 +253,17 @@ for file in to_process:
         # Best reco pi or e
         best_reco = None
         best_reco_pt = -1
-
         for pfo in pfos:
             pfo_pdg = pfo.getType()
-            if pfo_pdg != mcPDG or (abs(pfo_pdg) == 11 and pfo_pdg * mcPDG > 0): continue # Ensures reco e or pi is the same sign as the MC
+            if abs(pfo_pdg) not in [211, 11]: # Must be e or pi, no charge match case
+                continue
+            if not ignore_charge: # Enforce charge matching
+                pfo_is_positive = (pfo_pdg == 211 or pfo_pdg == -11) # True if positron, e+, or positive pion, pi+
+                mc_is_positive  = (mcPDG == 211) # True if MC pi+
+
+                if pfo_is_positive != mc_is_positive: # Check reco and mc charge match
+                    continue
+
 
             mom = pfo.getMomentum()
             pt = math.hypot(mom[0], mom[1])
