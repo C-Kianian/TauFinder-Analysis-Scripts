@@ -96,6 +96,7 @@ residual_maxs = {
     'plus': 1000,
     'minus': 1000,
     'both': 2000,
+    'none': 1000,
 }
 residual_max = residual_maxs[charge]
 
@@ -136,6 +137,7 @@ regional_maxs = {
     'plus': [800, 600, 400, 200],
     'minus': [800, 600, 400, 200],
     'both': [1600, 1200, 800, 400],
+    'none': [800, 600, 400, 200],
 }
 regional_max = regional_maxs[charge]
 fAllPtReg = {}
