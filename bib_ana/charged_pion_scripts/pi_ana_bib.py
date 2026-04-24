@@ -210,8 +210,13 @@ for file in to_process:
 
     for event in reader:
 
+        try:
+            mcs = event.getCollection('MCParticle')
+        except Exception:
+            print("Missing MCParticle in event", event.getEventNumber())
+            continue
+
         pfos = event.getCollection('PandoraPFOs')
-        mcs  = event.getCollection('MCParticle')
 
         # Best MC charged pion
         best_mc = None
@@ -229,6 +234,8 @@ for file in to_process:
 
         if best_mc is None:
             continue
+
+        if best_mc.getPDG() != mcs[0]: print("Highest pt pion is not the first one in the event!", event.getEventNumber()) # quick check
 
         # MC kinematics
         mcPDG = best_mc.getPDG()
@@ -253,80 +260,93 @@ for file in to_process:
                 fAllPtReg[reg].Fill(mcPt)
 
         # Best reconstructed charged pion and PFOs
-        best_reco_pi = None
-        best_reco_pi_pt = -1.0
+        best_reco_pi_default = None
+        best_reco_pi_pt_default = -1.0
+
+        best_reco_pi_strict = None
+        best_reco_pi_pt_strict = -1.0
 
         for pfo in pfos:
             if ignore_charge and abs(pfo.getType()) != abs(mcPDG): continue # no charge matching case
             elif pfo.getType() != mcPDG: continue
 
             # Pion kinematics
-            recoPiMom = pfo.getMomentum()
-            recoPiPt = math.hypot(recoPiMom[0], recoPiMom[1])
+            recoPiMomDefault = pfo.getMomentum()
+            recoPiPtDefault = math.hypot(recoPiMomDefault[0], recoPiMomDefault[1])
             pfoE = pfo.getEnergy()
-            recoPiTheta = math.acos(recoPiMom[2] / math.sqrt(recoPiPt ** 2 + recoPiMom[2] ** 2))
+            recoPiTheta = math.acos(recoPiMomDefault[2] / math.sqrt(recoPiPtDefault ** 2 + recoPiMomDefault[2] ** 2))
             recoPiEta = eta(recoPiTheta)
-            recoPiPhi = math.atan2(recoPiMom[1], recoPiMom[0])
+            recoPiPhi = math.atan2(recoPiMomDefault[1], recoPiMomDefault[0])
 
             # Fill all pion histograms
-            fAllPt.Fill(recoPiPt)
+            fAllPt.Fill(recoPiPtDefault)
             fAllEta.Fill(abs(recoPiEta))
             fAllTheta.Fill(recoPiTheta)
             fAllPhi.Fill(recoPiPhi)
             fAllE.Fill(pfoE)
 
-            if recoPiPt > best_reco_pi_pt:
-                best_reco_pi_pt = recoPiPt
-                best_reco_pi = pfo
+            # dR matching
+            dphi = delta_phi(mcPhi, recoPiPhi)
+            dR = math.sqrt(dphi*dphi + (mcEta - recoPiEta)**2)
 
-        if best_reco_pi is None:
+            if dR < 0.25:
+                if recoPiPtDefault > best_reco_pi_pt_default:
+                    best_reco_pi_pt_default = recoPiPtDefault
+                    best_reco_pi_default = pfo
+
+            if dR < 0.1:
+                if recoPiPtDefault > best_reco_pi_pt_strict:
+                    best_reco_pi_pt_strict = recoPiPtDefault
+                    best_reco_pi_strict = pfo
+
+        if best_reco_pi_default is None: # check if no default match was found, if so, skip this event
             continue
 
-        # Charged Pi kinematics
-        recoPiMom = best_reco_pi.getMomentum()
-        recoPiPt = best_reco_pi_pt
-        recoPiTheta = math.acos(recoPiMom[2] / math.sqrt(recoPiPt ** 2 + recoPiMom[2] ** 2))
-        recoPiEta = eta(recoPiTheta)
-        recoPiPhi = math.atan2(recoPiMom[1], recoPiMom[0])
-        recoPiE = best_reco_pi.getEnergy()
+        # Default charged Pi kinematics
+        recoPiMomDefault = best_reco_pi_default.getMomentum()
+        recoPiPtDefault = best_reco_pi_pt_default
+        recoPiEDefault = best_reco_pi_default.getEnergy()
 
-        # dR matching
-        dphi = delta_phi(mcPhi, recoPiPhi)
-        dR = math.sqrt(dphi*dphi + (mcEta - recoPiEta)**2)
+        # Fill default hists
+        fMatchedPt.Fill(mcPt)
+        fMatchedEta.Fill(abs(mcEta))
+        fMatchedTheta.Fill(mcTheta)
+        fMatchedPhi.Fill(mcPhi)
+        fMatchedE.Fill(mcE)
+        fResidualPt.Fill(mcPt - recoPiPtDefault)
+        fResidualE.Fill(mcE - recoPiEDefault)
+        fResPt.Fill((mcPt - recoPiPtDefault) / mcPt)
+        fResE.Fill((mcE - recoPiEDefault) / mcE)
+        # Fill default regional hists
+        if regs:
+            for reg in regs:
+                fMatchedPtReg[reg].Fill(mcPt)
+                fResPtReg[reg].Fill((mcPt - recoPiPtDefault) / mcPt)
+                fResEReg[reg].Fill((mcE - recoPiEDefault) / mcE)
 
-        if dR < 0.25:
-            fMatchedPt.Fill(mcPt)
-            fMatchedEta.Fill(abs(mcEta))
-            fMatchedTheta.Fill(mcTheta)
-            fMatchedPhi.Fill(mcPhi)
-            fMatchedE.Fill(mcE)
-            fResidualPt.Fill(mcPt - recoPiPt)
-            fResidualE.Fill(mcE - recoPiE)
-            fResPt.Fill((mcPt - recoPiPt) / mcPt)
-            fResE.Fill((mcE - recoPiE) / mcE)
 
-            if regs:
-                for reg in regs:
-                    fMatchedPtReg[reg].Fill(mcPt)
-                    fResPtReg[reg].Fill((mcPt - recoPiPt) / mcPt)
-                    fResEReg[reg].Fill((mcE - recoPiE) / mcE)
+        if best_reco_pi_strict is not None:
+            # Strict charged Pi kinematics
+            recoPiMomStrict = best_reco_pi_strict.getMomentum()
+            recoPiPtStrict = best_reco_pi_pt_strict
+            recoPiEStrict = best_reco_pi_strict.getEnergy()
 
-        if dR < 0.1:
+            # Fill strict hists
             fMatchedPtStrict.Fill(mcPt)
             fMatchedEtaStrict.Fill(abs(mcEta))
             fMatchedThetaStrict.Fill(mcTheta)
             fMatchedPhiStrict.Fill(mcPhi)
             fMatchedEStrict.Fill(mcE)
-            fResidualPtStrict.Fill(mcPt - recoPiPt)
-            fResidualEStrict.Fill(mcE - recoPiE)
-            fResPtStrict.Fill((mcPt - recoPiPt) / mcPt)
-            fResEStrict.Fill((mcE - recoPiE) / mcE)
-
+            fResidualPtStrict.Fill(mcPt - recoPiPtStrict)
+            fResidualEStrict.Fill(mcE - recoPiEStrict)
+            fResPtStrict.Fill((mcPt - recoPiPtStrict) / mcPt)
+            fResEStrict.Fill((mcE - recoPiEStrict) / mcE)
+            # Fill strict regional hists
             if regs:
                 for reg in regs:
                     fMatchedPtRegStrict[reg].Fill(mcPt)
-                    fResPtRegStrict[reg].Fill((mcPt - recoPiPt) / mcPt)
-                    fResERegStrict[reg].Fill((mcE - recoPiE) / mcE)
+                    fResPtRegStrict[reg].Fill((mcPt - recoPiPtStrict) / mcPt)
+                    fResERegStrict[reg].Fill((mcE - recoPiEStrict) / mcE)
 
     reader.close()
 
