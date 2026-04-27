@@ -235,7 +235,8 @@ for file in to_process:
         if best_mc is None:
             continue
 
-        if best_mc.getPDG() != mcs[0]: print("Highest pt pion is not the first one in the event!", event.getEventNumber()) # quick check
+        if best_mc != mcs[0]: print("Highest pt pion is not the first one in the event! (event #, best mc pdg, mc[0] pdg)",
+                                    event.getEventNumber(), best_mc.getPDG(), mcs[0].getPDG()) # quick check
 
         # MC kinematics
         mcPDG = best_mc.getPDG()
