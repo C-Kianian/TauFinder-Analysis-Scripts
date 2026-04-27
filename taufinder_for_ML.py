@@ -155,6 +155,17 @@ for i, event in enumerate(reader):
         b_nNeutral[0] = n_neutral
         b_isoE[0] = iso_e
 
+        # Clear buffer
+        for j in range(10): 
+            b_daughter_types[j] = 0
+
+        # Add daughter types
+        for j, dtype in enumerate(daughter_types):
+            if j < 10:
+                b_daughter_types[j] = int(dtype)
+            else:
+                break # TauFinder limits to 10
+
         # Truth matching
         matched = False
         for m_eta, m_phi in true_taus:
@@ -167,5 +178,6 @@ for i, event in enumerate(reader):
 reader.close()
 out_file.Write()
 out_file.Close()
+print(f"Processed {num_true_taus} true taus")
 print(f"Tree saved successfully to {args.output}")
 
