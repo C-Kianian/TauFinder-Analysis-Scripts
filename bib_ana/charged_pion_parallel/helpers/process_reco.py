@@ -5,7 +5,8 @@ import glob
 import numpy as np
 from pyLCIO import IOIMPL
 from ROOT import TH1F, TFile
-from helpers.main import process_set
+#from helpers.main import process_set
+from helpers.main_track_cluster_info import process_set
 
 import subprocess
 
