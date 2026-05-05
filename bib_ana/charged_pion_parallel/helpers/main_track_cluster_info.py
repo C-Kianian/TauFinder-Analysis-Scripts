@@ -13,6 +13,36 @@ from .geometry import eta, theta_region, delta_phi
 ROOT.gStyle.SetOptFit(111)
 ROOT.gStyle.SetOptStat("nemruo") #for uf/of info
 
+# helper functions
+def get_theta(px, py, pz):
+    pt = math.sqrt(px**2 + py**2)
+    return math.atan2(pt, pz)
+
+def get_phi(px, py):
+    return math.atan2(py, px)
+
+def getDr(MCP, track):
+    trk_omega, trk_tan_lambda, trk_phi = (
+        track.getOmega(), #signed curvature of track in 1/mm
+        track.getTanLambda(), #"dip angle" in r-z at reference point
+        track.getPhi(),
+    )
+    trk_theta = (math.pi / 2) - math.atan(trk_tan_lambda)
+    mcx, mcy, mcz = (MCP.getMomentum()[0], MCP.getMomentum()[1], MCP.getMomentum()[2])
+    mc_theta = get_theta(mcx, mcy, mcz)
+    mc_phi = get_phi(mcx,mcy)
+
+    dtheta = mc_theta - trk_theta
+    dphi = mc_phi - trk_phi
+
+    if dphi > math.pi:
+        dphi = math.fabs(dphi - 2 * math.pi)
+
+    return math.sqrt(dtheta * dtheta + dphi * dphi)
+
+BFIELD = 5.0 # Taking 5 T for MAIA and 3.57 T for MuColl_v1.
+FACTOR = 3e-4 # conversion factor to take T calculation to GeV pT
+
 # main processing function
 # TODO: Clean some of the below parameters
 # they should be input args in some sense
@@ -117,18 +147,20 @@ def process_set(pattern, max_events):
         ####### NEW HISTOGRAMS FOR TRACK-CLUSTER MATCHING FAILURE ########
         # Histograms for counting all/matched/failed track-cluster matching events
         # pfos
-        hists[f"fTrkClsPFOs_all_{region}"] = book(TH1F(f'trk_cls_match_all_PFOs_{region}', f'All (Matched/Failed) Track-Cluster # Charged PFOs ({region});Number of Charged PFOs;Entries', 100, 0, 100))
-        hists[f"fTrkClsPFOs_match_{region}"] = book(TH1F(f'trk_cls_match_PFOs_{region}', f'Matched Track-Cluster # Charged PFOs ({region});Number of Charged PFOs;Entries', 100, 0, 100))
-        hists[f"fTrkClsPFOs_fail_{region}"] = book(TH1F(f'trk_cls_match_fail_PFOs_{region}', f'Failed Track-Cluster # Charged PFOs ({region});Number of Charged PFOs;Entries', 100, 0, 100))
+        hists[f"fTrkClsPFOs_all_{region}"] = book(TH1F(f'trk_cls_all_PFOs_{region}', f'# Charged PFOs per All (Matched + Failed) Track-Cluster Event ({region});Number of Charged PFOs;Entries', 5, 0, 5))
+        hists[f"fTrkClsPFOs_match_{region}"] = book(TH1F(f'trk_cls_match_PFOs_{region}', f'# Charged PFOs per  Matched Track-Cluster Event ({region});Number of Charged PFOs;Entries', 5, 0, 5))
+        hists[f"fTrkClsPFOs_fail_{region}"] = book(TH1F(f'trk_cls_fail_PFOs_{region}', f'# Charged PFOs per Failed Track-Cluster Event ({region});Number of Charged PFOs;Entries', 5, 0, 5))
         # tracks
-        hists[f"fTrkClsTracks_all_{region}"] = book(TH1F(f'trk_cls_match_all_tracks_{region}', f'All (Matched/Failed) Track-Cluster  ({region});Number of Charged PFOs;Entries', 100, 0, 100))
-        hists[f"fTrkClsTracks_match_{region}"] = book(TH1F(f'trk_cls_match_track_{region}', f'Matched Track-Cluster # Charged PFOs ({region});Number of Charged PFOs;Entries', 100, 0, 100))
-        hists[f"fTrkClsTracks_fail_{region}"] = book(TH1F(f'trk_cls_match_fail_track_{region}', f'Failed Track-Cluster # Charged PFOs ({region});Number of Charged PFOs;Entries', 100, 0, 100))
+        hists[f"fTrkClsTracks_all_{region}"] = book(TH1F(f'trk_cls_all_tracks_{region}', f'# Charged Tracks per All (Matched + Failed) Track-Cluster Event ({region});Number of Charged PFOs;Entries', 5, 0, 5))
+        hists[f"fTrkClsTracks_match_{region}"] = book(TH1F(f'trk_cls_match_track_{region}', f'# Charged Tracks per Matched Track-Cluster Event({region});Number of Charged PFOs;Entries', 5, 0, 5))
+        hists[f"fTrkClsTracks_fail_{region}"] = book(TH1F(f'trk_cls_fail_track_{region}', f'# Charged Tracks per Failed Track-Cluster Event({region});Number of Charged PFOs;Entries', 5, 0, 5))
 
         ####### NEW HISTOGRAMS FOR TRACK-CLUSTER MATCHING QUALITY ########
         # Histograms for checking track-cluster matched event quality (normalized and unnormalized)
-        hists[f"fTrkClsQualNorm_{region}"] = book(TH1F(f'trk_cls_match_qual_norm_{region}', f'Normalized Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}} - E_{{cluster}} / p_{{T}}_{{track}};Entries', 100, -0.1, 0.1))
-        hists[f"fTrkClsQual_{region}"] = book(TH1F(f'trk_cls_match_qual_{region}', f'Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}}-E_{{cluster}};Entries', 400, -100, 100))
+        hists[f"fTrkClsQualNorm_{region}"] = book(TH1F(f'trk_cls_match_qual_norm_{region}', f'Normalized Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}} - E_{{cluster}} / p_{{T}}_{{track}};Entries', 100, -0.3, 0.3))
+        hists[f"fTrkClsQual_{region}"] = book(TH1F(f'trk_cls_match_qual_{region}', f'Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}}-E_{{cluster}};Entries', 500, -50, 50))
+        # hists for cluster counts
+        hists[f"fTrkClsNumCls_{region}"] = book(TH1F(f'trk_cls_match_num_cls_{region}', f'# of Clusters per Matched Track-Cluster Event ({region});# of Clusters;Entries', 5, 0, 5))
 
         # Histograms for counting track-cluster matching efficiency
         hists[f"fTrkClsPt_{region}"] = book(TH1F(f'trk_cls_match_pt_{region}', f'Matched Track-Cluster p_{{T}} ({region});p_{{T}}_true;Entries', PT_BINS, PT_MIN, PT_MAX))
@@ -310,8 +342,18 @@ def process_set(pattern, max_events):
                 hists[f"fTrkClsTracks_match_{reg}"].Fill(num_charge_tracks) # match
 
                 # track-cluster matching quality
-                #tracks = best_reco_charged.getTracks()
-                #if tracks is None: continue
+                tracks = best_reco_charged.getTracks()
+                best_reco_charged_track_pt = 0.0
+                if tracks is None or len(tracks) == 0: continue
+                if len(tracks) > 1: print("PFO has more than one track!")
+                if len(tracks) != 0:
+                    dRTracks = []
+                    for i in range(0,len(tracks)):
+                        dRTracks.append(getDr(best_mc, tracks[i]))
+                    # find closest track to truth pion
+                    myTrack = tracks[dRTracks.index(min(dRTracks))]
+                    best_reco_charged_track_pt = (BFIELD * FACTOR) / abs(myTrack.getOmega())
+
                 #total_px = 0.0
                 #total_py = 0.0
                 #for trk in tracks:
@@ -319,7 +361,7 @@ def process_set(pattern, max_events):
                 #    if abs(omega) < 1e-12:
                 #        continue
                 #
-                #    pt = 1.0 / abs(omega)
+                #    pt = (BFIELD * FACTOR) / abs(omega)
                 #
                 #    phi = trk.getPhi()
                 #
@@ -333,14 +375,16 @@ def process_set(pattern, max_events):
 
                 best_reco_cluster_e = 0.0
                 clusters = best_reco_charged.getClusters()
-                if clusters is None: continue
+                if clusters is None or len(clusters) == 0: continue
                 for cluster in clusters:
                     best_reco_cluster_e += cluster.getEnergy()
 
+                hists[f"fTrkClsNumCls_{reg}"].Fill(len(clusters))
+
+                trkCls = best_reco_charged_track_pt - best_reco_cluster_e
                 #ratio = best_reco_cluster_e / best_reco_charged_track_pt
-                ratio = best_reco_cluster_e / mcPt
-                hists[f"fTrkClsQualNorm_{reg}"].Fill(1 - ratio)
-                hists[f"fTrkClsQual_{reg}"].Fill(ratio)
+                hists[f"fTrkClsQualNorm_{reg}"].Fill(trkCls/best_reco_cluster_e)
+                hists[f"fTrkClsQual_{reg}"].Fill(trkCls)
 
                 hists[f"fTrkClsPt_{reg}"].Fill(mcPt)
                 hists[f"fTrkClsTheta_{reg}"].Fill(mcTheta)
