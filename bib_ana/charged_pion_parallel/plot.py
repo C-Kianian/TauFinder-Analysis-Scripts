@@ -131,7 +131,7 @@ def draw_overlay(hists, name, xtitle, regional=None, individual="", biblabel = "
     # Legend
 
     if individual == "":
-        legend = ROOT.TLegend(0.71, 0.75, 0.89, 0.88)        
+        legend = ROOT.TLegend(0.71, 0.75, 0.89, 0.88)
         for i in range(len(hists)):
             hist = hists[i]
             if i == 0:
@@ -145,8 +145,8 @@ def draw_overlay(hists, name, xtitle, regional=None, individual="", biblabel = "
                 style_hist(hist, color[i], marker[i], 1)
                 hist.Draw('E1 SAME')
                 legend.AddEntry(hist, label[i], 'lp')
-    else: 
-        legend = ROOT.TLegend(0.78, 0.75, 0.89, 0.88)        
+    else:
+        legend = ROOT.TLegend(0.78, 0.75, 0.89, 0.88)
         # this assumes the order
         histBIB = hists[0]
         histNoBIB = hists[1]
@@ -157,8 +157,8 @@ def draw_overlay(hists, name, xtitle, regional=None, individual="", biblabel = "
         histNoBIB.GetYaxis().SetTitle(f'{individual} Efficiency')
         style_hist(histBIB, ROOT.kBlack, ROOT.kFullCircle, 1)
         style_hist(histNoBIB, ROOT.kGray, ROOT.kFullCircle, 1)
-        legend.AddEntry(histNoBIB, "No BIB", 'lp')        
-        legend.AddEntry(histBIB, "BIB", 'lp')        
+        legend.AddEntry(histNoBIB, "No BIB", 'lp')
+        legend.AddEntry(histBIB, "BIB", 'lp')
         histNoBIB.Draw('E1')
         histBIB.Draw('E1 SAME')
 
@@ -197,13 +197,14 @@ for i in range(len(eff_names)):
     xtitle = f'True Pion {variables[i]}'
     if units[i]:
         xtitle += f' [{units[i]}]'
-    
+
     for region in regions:
         # expects the first file to be BIB, the second to be without BIB
         # space after BIB is needed
         biblabel = ["with BIB ", "without BIB "]
         bibindex = -1
         trk_cls_match = []
+        pfo_id_wrt_trk = []
         tracking_alone = []
         for file in files:
             to_overlay = []
@@ -232,11 +233,14 @@ for i in range(len(eff_names)):
             to_overlay.append(make_eff(num_trkcls, den, f'{var}_eff_trk_cls', xtitle, rebin=rebin))
             to_overlay.append(make_eff(num, den, f'{var}_eff', xtitle, rebin=rebin))
             trk_cls_match.append(make_eff(num_trkcls, num_trk, f'{var}_eff_trk_cls_alone', xtitle, rebin=rebin))
+            pfo_id_wrt_trk.append(make_eff(num, num_trk, f'{var}_eff_pfo_id_alone', xtitle, rebin=rebin))
 
             draw_overlay(to_overlay, name, xtitle, regional = region, biblabel=biblabel[bibindex])
 
         print("Drawing direct comparison plots...")
         draw_overlay(trk_cls_match, name, xtitle, regional = region, individual = "Track-Cluster Matching")
         draw_overlay(tracking_alone, name, xtitle, regional = region, individual = "Tracking")
+        draw_overlay(pfo_id_wrt_trk, name, xtitle, regional = region, individual = "PFO ID")
 
 print("Done. Overlays saved in:", args.outdir)
+

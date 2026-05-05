@@ -388,7 +388,7 @@ def process_set(pattern, max_events):
                 hists[f"fTrkClsQualNorm_{reg}"].Fill(trk_pT_Cls_E/best_reco_charged_track_pt)
                 hists[f"fTrkClsQual_{reg}"].Fill(trk_pT_Cls_E)
                 if mcPt > 50: hists[f"fTrkClsQualNorm_Grt50_{reg}"].Fill(trk_pT_Cls_E/best_reco_charged_track_pt)
-                if mcPt < 50: hists[f"fTrkClsQualNorm_Les50_{reg}"].Fill(trk_pT_Cls_E/best_reco_charged_track_pt)
+                if mcPt <= 50: hists[f"fTrkClsQualNorm_Les50_{reg}"].Fill(trk_pT_Cls_E/best_reco_charged_track_pt)
 
                 hists[f"fTrkClsPt_{reg}"].Fill(mcPt)
                 hists[f"fTrkClsTheta_{reg}"].Fill(mcTheta)
