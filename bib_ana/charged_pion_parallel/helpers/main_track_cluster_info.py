@@ -36,7 +36,7 @@ def getDr(MCP, track):
     dphi = mc_phi - trk_phi
 
     if dphi > math.pi:
-        dphi = math.fabs(dphi - 2 * math.pi)
+        dphi = (dphi + math.pi) % (2 * math.pi) - math.pi
 
     return math.sqrt(dtheta * dtheta + dphi * dphi)
 
@@ -151,14 +151,16 @@ def process_set(pattern, max_events):
         hists[f"fTrkClsPFOs_match_{region}"] = book(TH1F(f'trk_cls_match_PFOs_{region}', f'# Charged PFOs per  Matched Track-Cluster Event ({region});Number of Charged PFOs;Entries', 5, 0, 5))
         hists[f"fTrkClsPFOs_fail_{region}"] = book(TH1F(f'trk_cls_fail_PFOs_{region}', f'# Charged PFOs per Failed Track-Cluster Event ({region});Number of Charged PFOs;Entries', 5, 0, 5))
         # tracks
-        hists[f"fTrkClsTracks_all_{region}"] = book(TH1F(f'trk_cls_all_tracks_{region}', f'# Charged Tracks per All (Matched + Failed) Track-Cluster Event ({region});Number of Charged PFOs;Entries', 5, 0, 5))
-        hists[f"fTrkClsTracks_match_{region}"] = book(TH1F(f'trk_cls_match_track_{region}', f'# Charged Tracks per Matched Track-Cluster Event({region});Number of Charged PFOs;Entries', 5, 0, 5))
-        hists[f"fTrkClsTracks_fail_{region}"] = book(TH1F(f'trk_cls_fail_track_{region}', f'# Charged Tracks per Failed Track-Cluster Event({region});Number of Charged PFOs;Entries', 5, 0, 5))
+        hists[f"fTrkClsTracks_all_{region}"] = book(TH1F(f'trk_cls_all_tracks_{region}', f'# Charged Tracks per All (Matched + Failed) Track-Cluster Event ({region});Number of Charged Tracks;Entries', 5, 0, 5))
+        hists[f"fTrkClsTracks_match_{region}"] = book(TH1F(f'trk_cls_match_track_{region}', f'# Charged Tracks per Matched Track-Cluster Event({region});Number of Charged Tracks;Entries', 5, 0, 5))
+        hists[f"fTrkClsTracks_fail_{region}"] = book(TH1F(f'trk_cls_fail_track_{region}', f'# Charged Tracks per Failed Track-Cluster Event({region});Number of Charged Tracks;Entries', 5, 0, 5))
 
         ####### NEW HISTOGRAMS FOR TRACK-CLUSTER MATCHING QUALITY ########
         # Histograms for checking track-cluster matched event quality (normalized and unnormalized)
-        hists[f"fTrkClsQualNorm_{region}"] = book(TH1F(f'trk_cls_match_qual_norm_{region}', f'Normalized Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}} - E_{{cluster}} / p_{{T}}_{{track}};Entries', 100, -0.3, 0.3))
-        hists[f"fTrkClsQual_{region}"] = book(TH1F(f'trk_cls_match_qual_{region}', f'Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}}-E_{{cluster}};Entries', 500, -50, 50))
+        hists[f"fTrkClsQualNorm_{region}"] = book(TH1F(f'trk_cls_match_qual_norm_{region}', f'Normalized Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}} - E_{{cluster}} / p_{{T}}_{{track}};Entries', 100, -1, 1))
+        hists[f"fTrkClsQualNorm_Les50_{region}"] = book(TH1F(f'trk_cls_match_qual_lt50_norm_{region}', f'(p_{{T}}_{{true}} < 50) Normalized Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}} - E_{{cluster}} / p_{{T}}_{{track}};Entries', 100, -1, 1))
+        hists[f"fTrkClsQualNorm_Grt50_{region}"] = book(TH1F(f'trk_cls_match_qual_gt50_norm_{region}', f'(p_{{T}}_{{true}} > 50) Normalized Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}} - E_{{cluster}} / p_{{T}}_{{track}};Entries', 100, -1, 1))
+        hists[f"fTrkClsQual_{region}"] = book(TH1F(f'trk_cls_match_qual_{region}', f'Matched Track-Cluster p_{{T}}_{{track}} - E_{{cluster}} ({region});p_{{T}}_{{track}}-E_{{cluster}};Entries', 500, -100, 100))
         # hists for cluster counts
         hists[f"fTrkClsNumCls_{region}"] = book(TH1F(f'trk_cls_match_num_cls_{region}', f'# of Clusters per Matched Track-Cluster Event ({region});# of Clusters;Entries', 5, 0, 5))
 
@@ -381,10 +383,12 @@ def process_set(pattern, max_events):
 
                 hists[f"fTrkClsNumCls_{reg}"].Fill(len(clusters))
 
-                trkCls = best_reco_charged_track_pt - best_reco_cluster_e
+                trk_pT_Cls_E = best_reco_charged_track_pt - best_reco_cluster_e
                 #ratio = best_reco_cluster_e / best_reco_charged_track_pt
-                hists[f"fTrkClsQualNorm_{reg}"].Fill(trkCls/best_reco_cluster_e)
-                hists[f"fTrkClsQual_{reg}"].Fill(trkCls)
+                hists[f"fTrkClsQualNorm_{reg}"].Fill(trk_pT_Cls_E/best_reco_charged_track_pt)
+                hists[f"fTrkClsQual_{reg}"].Fill(trk_pT_Cls_E)
+                if mcPt > 50: hists[f"fTrkClsQualNorm_Grt50_{reg}"].Fill(trk_pT_Cls_E/best_reco_charged_track_pt)
+                if mcPt < 50: hists[f"fTrkClsQualNorm_Les50_{reg}"].Fill(trk_pT_Cls_E/best_reco_charged_track_pt)
 
                 hists[f"fTrkClsPt_{reg}"].Fill(mcPt)
                 hists[f"fTrkClsTheta_{reg}"].Fill(mcTheta)

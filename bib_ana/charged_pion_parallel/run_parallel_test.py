@@ -14,12 +14,12 @@ if __name__ == "__main__":
     # BIB file 1
     #parser.add_argument('-i', '--inputFileDir', type=str, default='/data/gpenn/v8_noFragRem/pion_1GeV_1TeV/reco_output_sim_piguns_v8')
     # no BIB file 1
-    #parser.add_argument('-i', '--inputFileDir', type=str, default='/data/gpenn/v8_noFragRem/pion_1GeV_1TeV_noBIB/reco_noFragRem_noBIB_output_sim_piguns_v8')
+    parser.add_argument('-i', '--inputFileDir', type=str, default='/data/gpenn/v8_noFragRem/pion_1GeV_1TeV_noBIB/reco_noFragRem_noBIB_output_sim_piguns_v8')
     # BIB file 2 
     #parser.add_argument('-i', '--inputFileDir', type=str, default='/data/gpenn/v8_noFragRem/round2_pion_1GeV_1TeV/reco_output_sim_piguns_1G_1T')
     # no BIB file 2
-    parser.add_argument('-i', '--inputFileDir', type=str, default='/data/gpenn/v8_noFragRem/round2_pion_1GeV_1TeV_noBIB/reco_noFragRem_noBIB_output_sim_piguns_1G_1T')
-    parser.add_argument('-o', '--outputFile', type=str, default='/scratch/kianian/pi_no_bib_ana2/pi_NB2_file')
+    #parser.add_argument('-i', '--inputFileDir', type=str, default='/data/gpenn/v8_noFragRem/round2_pion_1GeV_1TeV_noBIB/reco_noFragRem_noBIB_output_sim_piguns_1G_1T')
+    parser.add_argument('-o', '--outputFile', type=str, default='/scratch/kianian/pi_no_bib_ana/pi_NB1_file')
     args = parser.parse_args()
 
     MAX_EVENTS = 500
