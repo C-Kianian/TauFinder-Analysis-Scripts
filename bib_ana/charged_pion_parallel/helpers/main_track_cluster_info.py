@@ -168,9 +168,17 @@ def process_set(pattern, max_events):
         hists[f"fTrkClsPt_{region}"] = book(TH1F(f'trk_cls_match_pt_{region}', f'Matched Track-Cluster p_{{T}} ({region});p_{{T}}_true;Entries', PT_BINS, PT_MIN, PT_MAX))
         hists[f"fTrkClsTheta_{region}"] = book(TH1F(f'trk_cls_match_theta_{region}', f'Matched Track-Cluster p_{{T}} #theta ({region});#theta_true [rad];Entries', THETA_BINS, 0, np.pi))
 
+        # Histograms for counting track-cluster matching efficiency with check on matched cluster quality
+        hists[f"fTrkClsPt_0.95_{region}"] = book(TH1F(f'trk_cls_match_0.95_pt_{region}', f'(0.95 cut) Matched Track-Cluster p_{{T}} ({region});p_{{T}}_true;Entries', PT_BINS, PT_MIN, PT_MAX))
+        hists[f"fTrkClsTheta_0.95_{region}"] = book(TH1F(f'trk_cls_match_0.95_theta_{region}', f'(0.95 cut) Matched Track-Cluster p_{{T}} #theta ({region});#theta_true [rad];Entries', THETA_BINS, 0, np.pi))
+
         # Histograms for counting reco charged pions
         hists[f"fMatchedPt_{region}"] = book(TH1F(f'mc_matched_pt_{region}', f'Matched Best Reco Charged Pion MC p_{{T}} ({region});p_{{T}}_true;Entries', PT_BINS, PT_MIN, PT_MAX))
         hists[f"fMatchedTheta_{region}"] = book(TH1F(f'mc_matched_theta_{region}', f'Matched Best Charged Reco Pion MC #theta ({region});#theta_true [rad];Entries', THETA_BINS, 0, np.pi))
+
+        # Histograms for counting reco charged pions with check on matched cluster quality
+        hists[f"fMatchedPt_0.95_{region}"] = book(TH1F(f'mc_matched_0.95_pt_{region}', f'(0.95 cut) Matched Best Reco Charged Pion MC p_{{T}} ({region});p_{{T}}_true;Entries', PT_BINS, PT_MIN, PT_MAX))
+        hists[f"fMatchedTheta_0.95_{region}"] = book(TH1F(f'mc_matched_0.95_theta_{region}', f'(0.95 cut) Matched Best Charged Reco Pion MC #theta ({region});#theta_true [rad];Entries', THETA_BINS, 0, np.pi))
 
     files = sorted(glob.glob(pattern))
     selected_pdgs = allowed_pdgs[charge]
@@ -390,6 +398,16 @@ def process_set(pattern, max_events):
                 if mcPt > 50: hists[f"fTrkClsQualNorm_Grt50_{reg}"].Fill(trk_pT_Cls_E/best_reco_charged_track_pt)
                 if mcPt <= 50: hists[f"fTrkClsQualNorm_Les50_{reg}"].Fill(trk_pT_Cls_E/best_reco_charged_track_pt)
 
+                # fill only those passing cut
+                if trk_pT_Cls_E/best_reco_charged_track_pt < 0.95:
+                    hists[f"fTrkClsPt_0.95_{reg}"].Fill(mcPt)
+                    hists[f"fTrkClsTheta_0.95_{reg}"].Fill(mcTheta)
+                    # now add to the charged pion ID histogram
+                    if abs(best_reco_charged.getType()) == abs(mcPDG):
+                        hists[f"fMatchedPt_0.95_{reg}"].Fill(mcPt)
+                        hists[f"fMatchedTheta_0.95_{reg}"].Fill(mcTheta)
+
+                # fill regardless of cut result
                 hists[f"fTrkClsPt_{reg}"].Fill(mcPt)
                 hists[f"fTrkClsTheta_{reg}"].Fill(mcTheta)
                 # now add to the charged pion ID histogram
