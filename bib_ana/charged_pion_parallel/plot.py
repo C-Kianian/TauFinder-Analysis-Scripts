@@ -22,7 +22,7 @@ args = parser.parse_args()
 ##################
 # CHANGE BINS HERE
 # rebins = [0, 50, 100, 200, 300, 400, 700, 1000]
-rebins = [0, 50, 100, 300, 500, 700, 1000]
+rebins = [0, 15, 30, 50, 75, 100, 300, 500, 700, 1000]
 # rebins = [0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 #rebins = [0, 25, 50, 75, 100, 200, 300, 400, 500, 525, 550, 570, 600, 625, 650, 675, 700, 725, 750, 775, 800, 900, 1000]
 #rebins = linspace(0, 1000, 81)
@@ -86,12 +86,12 @@ units = ['GeV', 'rad']
 
 regions = ['barrel', 'centbarrel', 'transition', 'endcap']
 
-def style_hist(h, color, marker, linestyle=1):
+def style_hist(h, color, marker, linestyle=1, markerSize = 1.3):
     h.SetLineColor(color)
     h.SetMarkerColor(color)
     h.SetLineWidth(2)
     h.SetMarkerStyle(marker)
-    h.SetMarkerSize(1.3)
+    h.SetMarkerSize(markerSize)
     h.SetLineStyle(linestyle)
     h.SetStats(0)
 
@@ -162,7 +162,7 @@ def draw_overlay(hists, name, xtitle, regional=None, individual="", biblabel = "
         histNoBIB.GetXaxis().SetTitle(xtitle)
         histNoBIB.GetYaxis().SetTitle(f'{individual} Efficiency')
         style_hist(histBIB, ROOT.kBlack, ROOT.kFullCircle, 1)
-        style_hist(histNoBIB, ROOT.kGray, ROOT.kFullCircle, 1)
+        style_hist(histNoBIB, ROOT.kGray, ROOT.kFullCircle, 1, markerSize=2.0)
         legend.AddEntry(histNoBIB, "No BIB", 'lp')
         legend.AddEntry(histBIB, "BIB", 'lp')
         histNoBIB.Draw('E1')
